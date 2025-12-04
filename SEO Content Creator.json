@@ -1,0 +1,399 @@
+{
+  "name": "SEO Content Creator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "blog",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -160,
+        -32
+      ],
+      "id": "b10ce6d8-f3e0-45b9-81b4-b0b0b6864377",
+      "name": "Webhook",
+      "webhookId": "234ec001-e048-4bee-9a67-a9e3254442c9",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f55e3c8-b42c-48fc-a3e8-accaa6fa8916",
+              "name": "title",
+              "value": "={{ $json.body.title }}",
+              "type": "string"
+            },
+            {
+              "id": "a7096cd6-f2ed-44cc-b8fa-3af8b4ad73c8",
+              "name": "keywords",
+              "value": "={{ $json.body.keywords }}",
+              "type": "array"
+            },
+            {
+              "id": "a7ecdded-16d6-4b67-9e09-c36e7c4bac4f",
+              "name": "tone",
+              "value": "={{ $json.body.tone }}",
+              "type": "string"
+            },
+            {
+              "id": "4407ff43-dc18-4888-b6b9-47223240470f",
+              "name": "aspect",
+              "value": "={{ $json.body.aspect }}",
+              "type": "string"
+            },
+            {
+              "id": "2a3639dc-f0bb-4bdd-b767-e4179e99e0c7",
+              "name": "id",
+              "value": "={{ $json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "347bdbbc-ebb2-4bb3-a155-0850f7d12ad3",
+              "name": "initiatd_at",
+              "value": "={{$now}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        112,
+        -32
+      ],
+      "id": "018e27e8-05c6-4c6c-9506-c85001c1901e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You will receive blog generation parameters for iBOS (International British Online School).\n\nTitle: {{$json[\"title\"]}}\nAspect: {{$json[\"aspect\"]}}\nTone: {{$json[\"tone\"]}}\nKeywords: {{ $json[\"keywords\"].join(\", \") }}\n\nUsing these parameters, write the blog article according to the system instructions.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are SEO Specialist\n\nYou MUST: \n- Use ALL of these keywords at least once in the article, where they fit naturally. \n- Prefer to place some keywords in headings and the first 2–3 paragraphs. \n- Never simply list the keywords as a comma-separated list; always weave them into full sentences. \n- Avoid keyword stuffing: do not repeat any single keyword more than 3 times unless it is part of the main title. \nIf for any reason a keyword is grammatically incorrect, still use it exactly as provided at least once in the text.\n\nGenerate the article in clean, semantic HTML optimized for readability and SEO.\nUse the following structure rules:\n\nUse <h1>, <h2>, <h3>, etc. for headings.\n\nUse <p> for all paragraphs.\n\nUse <span> only for inline emphasis or small inline notes.\n\nUse <a> tags for references, internal anchors, citations, or external links.\n\nUse <blockquote> for quoted text.\n\nUse <ul> and <ol> for lists when appropriate.\n\nUse <br?>  for enter when need.\n\nDo NOT include:\n- <!DOCTYPE html>\n- <html>, <head>, <body>\n- <title>, <meta>, <link>, <style>, <script>\n\nOnly return the inner content of the article, such as:\n<article>, <section>, <h1>-<h3>, <p>, <ul>, <ol>, <li>, <img>, <strong>, <em>, etc.\n\nEnsure headings are hierarchical and SEO-friendly.\n\nMake the markup clean, minimal, and well-formatted.\n\nReturn only the final HTML, without explanation or markdown formatting."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        384,
+        -32
+      ],
+      "id": "38a81785-bb85-45de-8a4f-34a61bd08b56",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.1",
+          "mode": "list",
+          "cachedResultName": "gpt-5.1"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.8,
+          "topP": 0.8
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        144
+      ],
+      "id": "9da48e4f-fe78-421c-a5d5-563768a6bd2b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nLFGrSD41fPZRABe",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "prompt": "=make an 16:9 image for following article :\n\n{{ $json.output[0].content[0].text }}",
+        "options": {
+          "returnImageUrls": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        224
+      ],
+      "id": "e282d0ff-82fe-425f-93d1-53f94872a037",
+      "name": "Generate an image",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5,
+      "credentials": {
+        "openAiApi": {
+          "id": "nLFGrSD41fPZRABe",
+          "name": "OpenAi account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n\"title\": $json.title,\n\"content\": $json.content,\n\"cover\": $json.cover,\n\"tag\":$json.tag,\n\"created_at\":$json.created_at,\n\"initiated_at\":$json.initiated_at,\n\"id\":$json.id\n} }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1920,
+        -16
+      ],
+      "id": "359da07d-70e4-496f-9503-c6869bb8fb55",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=you are SEO specialist\nget me best tags from this blog without any extra explanation and get me just tags\n\n{{ $json.text }}"
+            }
+          ]
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "low"
+          }
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        864,
+        -32
+      ],
+      "id": "8923266f-3aa0-412f-b32f-4f7d7d1be13c",
+      "name": "Message a model",
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "nLFGrSD41fPZRABe",
+          "name": "OpenAi account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=you are prompt engineer for image generation\nmake prompt for image generation for following blog without any extra explaination\n{{ $json.text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        816,
+        224
+      ],
+      "id": "1c84eb5a-e32f-4926-acb7-3c4983118e03",
+      "name": "Message a model1",
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "nLFGrSD41fPZRABe",
+          "name": "OpenAi account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ {\n  title: $node[\"Webhook\"].json.body.title,\n  content: $node[\"Basic LLM Chain\"].json.text,\n  cover: $item(1).$node[\"Merge\"].json.url,\n  tag: $node[\"Merge\"].json.output[0].content[0].text,\n  created_at: $now,\n  initiated_at: $node[\"Edit Fields\"].json.initiatd_at,\n  id: $node[\"Edit Fields\"].json.id\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1696,
+        -16
+      ],
+      "id": "818b658b-90f5-4c46-a7f7-c0c0dc2db6bd",
+      "name": "Edit Fields1",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1456,
+        -16
+      ],
+      "id": "5f7884c7-d8d0-4506-a54b-a3875a17c851",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook1": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "Rahl8lYfxY4y0xQH"
+  },
+  "versionId": "959aa7c5-8984-41f8-9fa5-aa0ccac80bb2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a72dd1235b595d8d9b0cd7e40ebf14b445170ff7244f0e1a11f288a914022071"
+  },
+  "id": "Rahl8lYfxY4y0xQH",
+  "tags": []
+}
