@@ -1,0 +1,583 @@
+{
+  "name": "Blog Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "blog",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2b719c19-2ae3-4593-a3c6-7f78b0e21931",
+      "name": "Webhook",
+      "webhookId": "b78c86ae-2f1d-467c-99b3-46bc230252e8",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f55e3c8-b42c-48fc-a3e8-accaa6fa8916",
+              "name": "title",
+              "value": "={{ $json.body.title }}",
+              "type": "string"
+            },
+            {
+              "id": "a7096cd6-f2ed-44cc-b8fa-3af8b4ad73c8",
+              "name": "keywords",
+              "value": "={{ $json.body.keywords }}",
+              "type": "string"
+            },
+            {
+              "id": "a7ecdded-16d6-4b67-9e09-c36e7c4bac4f",
+              "name": "tone",
+              "value": "={{ $json.body.tone }}",
+              "type": "string"
+            },
+            {
+              "id": "4407ff43-dc18-4888-b6b9-47223240470f",
+              "name": "aspect",
+              "value": "={{ $json.body.aspect }}",
+              "type": "string"
+            },
+            {
+              "id": "2a3639dc-f0bb-4bdd-b767-e4179e99e0c7",
+              "name": "id",
+              "value": "={{ $json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "347bdbbc-ebb2-4bb3-a155-0850f7d12ad3",
+              "name": "initiatd_at",
+              "value": "={{$now}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        272,
+        0
+      ],
+      "id": "976255ee-f3d8-43fb-991c-705fb97ec3e6",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.2",
+          "mode": "list",
+          "cachedResultName": "gpt-5.2"
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "medium"
+          }
+        },
+        "options": {
+          "reasoningEffort": "medium"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        256
+      ],
+      "id": "cc7a80f2-fc49-4a5d-bd3f-ae44fc692927",
+      "name": "OpenAI Chat Model",
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "C1nCC3Y4GMh3RY4a",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({\n  title: $items(\"Webhook\")[0].json.body,\n  content: $items(\"Blog Generator\")[0].json.text,\n  cover: $items(\"Merge\")[1].json.url,\n  images: $items(\"Merge\")[2].json.url,\n  tag: $items(\"Merge\")[0].json.output[0].content[0].text,\n  created_at: $now,\n  initiated_at: $items(\"Edit Fields\")[0].json.initiatd_at,\n  id: $items(\"Edit Fields\")[0].json.id\n}, null, 2) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2192,
+        32
+      ],
+      "id": "0bdc417d-9a74-4508-b7e0-9ba7349f61dc",
+      "name": "Edit Fields1",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1952,
+        16
+      ],
+      "id": "4a1620fc-8df7-4cc6-8958-09eb4eb77d3c",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n\"title\": $json.title,\n\"content\": $json.content,\n\"cover\": $json.cover,\n\"tag\":$json.tag,\n\"created_at\":$json.created_at,\n\"initiated_at\":$json.initiated_at,\n\"id\":$json.id\n} }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2384,
+        32
+      ],
+      "id": "c84832ac-a19b-4e00-8e35-48b8231c964f",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=you are SEO specialist\nget me best tags from this blog without any extra explanation and get me just tags\n\nget me output like that:\n[tag1, tag2, ...]\n\n{{ $json.text }}"
+            }
+          ]
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "low"
+          }
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        0
+      ],
+      "id": "e9f97c73-a2aa-47f2-bcad-e49c60d60ea1",
+      "name": "Tag finder",
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "C1nCC3Y4GMh3RY4a",
+          "name": "OpenAi account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gemini-3-pro-preview",
+          "mode": "list",
+          "cachedResultName": "GEMINI-3-PRO-PREVIEW"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=you are prompt engineer for nano banana pro image generation\nmake prompt for image generation for following blog without any extra explaination\n{{ $json.text }}"
+            }
+          ]
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "low"
+          }
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        960,
+        272
+      ],
+      "id": "a9772f50-955f-4917-b472-9d5aaa3a2579",
+      "name": "Cover Generation Prompt Maker",
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "C1nCC3Y4GMh3RY4a",
+          "name": "OpenAi account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You will receive blog generation parameters for iBOS (International British Online School).\n\nTitle: {{$json[\"title\"]}}\nAspect: {{$json[\"aspect\"]}}\nTone: {{$json[\"tone\"]}}\nKeywords: {{ $json[\"keywords\"]}}\n\nUsing these parameters, write the blog article according to the system instructions.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are SEO Specialist\n\nYou MUST: \n- Use ALL of these keywords at least once in the article, where they fit naturally. \n- Prefer to place some keywords in headings and the first 2–3 paragraphs. \n- Never simply list the keywords as a comma-separated list; always weave them into full sentences. \n- Avoid keyword stuffing: do not repeat any single keyword more than 3 times unless it is part of the main title. \nIf for any reason a keyword is grammatically incorrect, still use it exactly as provided at least once in the text.\n\nGenerate the article in clean, semantic HTML optimized for readability and SEO.\nUse the following structure rules:\n\nUse <h1>, <h2>, <h3>, etc. for headings.\n\nUse <p> for all paragraphs.\n\nUse <span> only for inline emphasis or small inline notes.\n\nUse <a> tags for references, internal anchors, citations, or external links.\n\nUse <blockquote> for quoted text.\n\nUse <ul> and <ol> for lists when appropriate.\n\nUse <br?>  for enter when need.\n\nDo NOT include:\n- <!DOCTYPE html>\n- <html>, <head>, <body>\n- <title>, <meta>, <link>, <style>, <script>\n\nOnly return the inner content of the article, such as:\n<article>, <section>, <h1>-<h3>, <p>, <ul>, <ol>, <li>, <img>, <strong>, <em>, etc.\n\nEnsure headings are hierarchical and SEO-friendly.\n\nMake the markup clean, minimal, and well-formatted.\n\nReturn only the final HTML, without explanation or markdown formatting."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        528,
+        0
+      ],
+      "id": "24d1c73d-15d4-46a5-950d-f79b0a119ec8",
+      "name": "Blog Generator"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gemini-3-pro-preview",
+          "mode": "list",
+          "cachedResultName": "GEMINI-3-PRO-PREVIEW"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=you are prompt engineer for nano banana image generation\nmake prompt for Infography generation for following blog without any extra explaination\n{{ $json.text }}"
+            }
+          ]
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "low"
+          }
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        944,
+        496
+      ],
+      "id": "ef8ec2c3-e1c2-4b91-89af-99f2b7eefd3b",
+      "name": "Infography Generation Prompt Maker",
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "C1nCC3Y4GMh3RY4a",
+          "name": "OpenAi account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avalai.ir/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ JSON.stringify({\n  model: \"gemini-3-pro-image-preview\",\n  messages: [\n    {\n      role: \"user\",\n      content: $json.output?.[0]?.content?.[0]?.text ?? \"test\"\n    }\n  ],\n  generationConfig: {\n    responseModalities: [\"TEXT\", \"IMAGE\"],\n    imageConfig: { aspectRatio: \"16:9\" }\n  }\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1248,
+        272
+      ],
+      "id": "be568f85-e9f6-443e-bc00-244c87263169",
+      "name": "Raw Cover Generator",
+      "retryOnFail": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "QKe6bM7bMR0BIrEm",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.avalai.ir/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={{ JSON.stringify({\n  model: \"gemini-3-pro-image-preview\",\n  messages: [\n    {\n      role: \"user\",\n      content: $json.output?.[0]?.content?.[0]?.text ?? \"test\"\n    }\n  ],\n  generationConfig: {\n    responseModalities: [\"TEXT\", \"IMAGE\"],\n    imageConfig: { aspectRatio: \"16:9\" }\n  }\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1248,
+        496
+      ],
+      "id": "084ed332-a9b0-4d74-a4c9-46cc40cc6d61",
+      "name": "Raw Infography Generator",
+      "retryOnFail": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "QKe6bM7bMR0BIrEm",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node (JavaScript)\nconst dataUrl =\n  $json.choices?.[0]?.message?.images?.[0]?.image_url?.url;\n\nif (!dataUrl) throw new Error(\"No image dataUrl found in response\");\n\n// data:image/jpeg;base64,AAAA...\nconst [header, base64Data] = dataUrl.split(\",\", 2);\n\n// Extract mimeType from header (data:image/jpeg;base64)\nconst mimeType = header.split(\";\")[0].replace(\"data:\", \"\");\nconst ext = mimeType.split(\"/\")[1] || \"jpg\";\n\nreturn [\n  {\n    json: {\n      mimeType,\n      note: \"Image extracted from data URL\",\n      url: dataUrl,              // ✅ added\n      // optional: you can also add a shorter preview field if you want\n      // download_url_preview: dataUrl.slice(0, 80) + \"...\",\n    },\n    binary: {\n      image: {\n        data: base64Data,                 // base64 only (no prefix)\n        mimeType,\n        fileName: `gemini_output.${ext}`,\n      },\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        496
+      ],
+      "id": "bd8defb3-50c1-44d8-b60a-8ff568e85177",
+      "name": "Infography Generator",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node (JavaScript)\nconst dataUrl =\n  $json.choices?.[0]?.message?.images?.[0]?.image_url?.url;\n\nif (!dataUrl) throw new Error(\"No image dataUrl found in response\");\n\n// data:image/jpeg;base64,AAAA...\nconst [header, base64Data] = dataUrl.split(\",\", 2);\n\n// Extract mimeType from header (data:image/jpeg;base64)\nconst mimeType = header.split(\";\")[0].replace(\"data:\", \"\");\nconst ext = mimeType.split(\"/\")[1] || \"jpg\";\n\nreturn [\n  {\n    json: {\n      mimeType,\n      note: \"Image extracted from data URL\",\n      url: dataUrl,              // ✅ added\n      // optional: you can also add a shorter preview field if you want\n      // download_url_preview: dataUrl.slice(0, 80) + \"...\",\n    },\n    binary: {\n      image: {\n        data: base64Data,                 // base64 only (no prefix)\n        mimeType,\n        fileName: `gemini_output.${ext}`,\n      },\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        272
+      ],
+      "id": "f4ce3451-a685-4619-817b-b7c1a64b0a8b",
+      "name": "Cover Generatorr",
+      "alwaysOutputData": false
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Blog Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Blog Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag finder": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cover Generation Prompt Maker": {
+      "main": [
+        [
+          {
+            "node": "Raw Cover Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Blog Generator": {
+      "main": [
+        [
+          {
+            "node": "Tag finder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cover Generation Prompt Maker",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Infography Generation Prompt Maker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Infography Generation Prompt Maker": {
+      "main": [
+        [
+          {
+            "node": "Raw Infography Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Raw Cover Generator": {
+      "main": [
+        [
+          {
+            "node": "Cover Generatorr",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Raw Infography Generator": {
+      "main": [
+        [
+          {
+            "node": "Infography Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Infography Generator": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Cover Generatorr": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Europe/London"
+  },
+  "versionId": "bd335262-6193-4dd5-b633-4c2469cfe334",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ef3ce4853d7fcc71ad6d133b277aa874fabf442430278be53ac77c026eb47ad2"
+  },
+  "id": "sVIhQZSUeEJnQ4OB",
+  "tags": []
+}
