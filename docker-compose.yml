@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: n8n
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  n8n:
+    image: n8nio/n8n:2.1.4
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_RUNNERS_MODE=external
+      - N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
+      - N8N_NATIVE_PYTHON_RUNNER=true
+      - N8N_RESTRICT_FILE_ACCESS_TO=/files
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - GENERIC_TIMEZONE=Asia/Tehran
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - n8n_files:/files
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - default
+      - crm-front_ibos-network
+
+  task-runners:
+    image: n8nio/runners:2.1.4
+    restart: unless-stopped
+    environment:
+      - N8N_RUNNERS_TASK_BROKER_URI=http://n8n:5679
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
+      - N8N_RUNNERS_LAUNCHER_HEALTH_CHECK_PORT=5680
+      - N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT=15
+    volumes:
+      - ./n8n-task-runners.json:/etc/n8n-task-runners.json:ro
+    depends_on:
+      - n8n
+    networks:
+      - default
+
+networks:
+  crm-front_ibos-network:
+    external: true
+  default:
+
+volumes:
+  n8n_data:
+  n8n_files:
+  postgres_data:
